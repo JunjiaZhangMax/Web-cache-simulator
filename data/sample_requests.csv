@@ -1,0 +1,7 @@
+timestamp,client_id,url,size_bytes
+0,client_1,https://example.com/index.html,1024
+1,client_2,https://example.com/style.css,512
+2,client_2,https://example.com/index.html,1024
+3,client_1,https://example.com/logo.png,2048
+4,client_3,https://example.com/style.css,512
+5,client_3,https://example.com/index.html,1024
