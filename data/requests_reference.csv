@@ -1,0 +1,16 @@
+timestamp,client_id,method,scheme,host,path
+2026-10-26T09:00:00Z,student-01,GET,https,learn.university.edu,/courses/ics/index.html
+2026-10-26T09:00:15Z,student-02,GET,https,learn.university.edu,/static/main.css
+2026-10-26T09:00:30Z,student-03,GET,https,learn.university.edu,/static/logo.svg
+2026-10-26T09:00:45Z,student-01,GET,https,learn.university.edu,/courses/ics/index.html
+2026-10-26T09:01:00Z,student-02,GET,https,learn.university.edu,/static/main.css
+2026-10-26T09:01:15Z,student-03,GET,https,cdn.university.edu,/images/avatar-default.png
+2026-10-26T09:01:30Z,student-01,GET,https,learn.university.edu,/courses/ics/index.html
+2026-10-26T09:01:45Z,student-02,GET,https,learn.university.edu,/static/logo.svg
+2026-10-26T09:02:00Z,student-03,GET,https,pypi.org,/static/css/warehouse.css
+2026-10-26T09:02:15Z,student-01,GET,https,learn.university.edu,/static/main.css
+2026-10-26T09:02:30Z,student-02,GET,https,cdn.university.edu,/images/avatar-default.png
+2026-10-26T09:02:45Z,student-03,GET,https,learn.university.edu,/courses/ics/index.html
+2026-10-26T09:03:00Z,student-01,GET,https,pypi.org,/static/css/warehouse.css
+2026-10-26T09:03:15Z,student-02,GET,https,learn.university.edu,/static/logo.svg
+2026-10-26T09:03:30Z,student-03,GET,https,learn.university.edu,/static/main.css

@@ -1,0 +1,16 @@
+step,resource_id,client_id,result,evicted,cache_contents_oldest_first,cache_used_KiB,response_ms,cumulative_origin_bytes,cumulative_hits
+1,A,student-01,MISS,-,A,32,125,32768,0
+2,B,student-02,MISS,-,"A,B",74,90,75776,0
+3,C,student-03,MISS,-,"A,B,C",88,80,90112,0
+4,A,student-01,HIT,-,"A,B,C",88,5,90112,1
+5,B,student-02,HIT,-,"A,B,C",88,5,90112,2
+6,D,student-03,MISS,A,"B,C,D",80,95,114688,2
+7,A,student-01,MISS,B,"C,D,A",70,125,147456,2
+8,C,student-02,HIT,-,"C,D,A",70,5,147456,3
+9,E,student-03,MISS,"C,D","A,E",89,210,205824,3
+10,B,student-01,MISS,A,"E,B",99,90,248832,3
+11,D,student-02,MISS,E,"B,D",66,95,273408,3
+12,A,student-03,MISS,-,"B,D,A",98,125,306176,3
+13,E,student-01,MISS,"B,D","A,E",89,210,364544,3
+14,C,student-02,MISS,A,"E,C",71,80,378880,3
+15,B,student-03,MISS,E,"C,B",56,90,421888,3
