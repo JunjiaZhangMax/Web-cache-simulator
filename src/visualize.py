@@ -33,37 +33,37 @@ def build_trace(resources, requests, capacity_bytes=102400, hit_latency_ms=5.0):
                                entries=[dict(url=url, **entry) for url, entry in cache.entries.items()],
                                totals=totals.copy()))
 
-        snapshot(-1, "start", "初始缓存为空；所有客户端共享同一份缓存。")
+        snapshot(-1, "start", "The cache starts empty and is shared by all clients.")
         for index, result in enumerate(results):
             url = result["url"]
             resource = resources[url]
             size = resource["size_bytes"]
             result["size_bytes"] = size
             result["latency_ms"] = hit_latency_ms if result["cache_hit"] else result["latency_ms"]
-            snapshot(index, "request", "客户端发出请求，按 URL 查询共享缓存。", url)
+            snapshot(index, "request", "Look up the requested URL in the shared cache.", url)
             entry = cache.get(url)
             if result["cache_hit"]:
                 assert entry is not None
-                snapshot(index, "hit", "缓存命中：更新最近访问顺序与访问次数，无需访问源站。", url)
+                snapshot(index, "hit", "Cache hit: update access order and count. No origin fetch is needed.", url)
             else:
                 assert entry is None
-                snapshot(index, "miss", "缓存未命中：从源站获取资源，产生源站流量与延迟。", url)
+                snapshot(index, "miss", "Cache miss: fetch from the origin, adding traffic and latency.", url)
                 if size > capacity_bytes:
-                    snapshot(index, "bypass", "资源大于缓存总容量，直接返回，不淘汰现有资源。", url)
+                    snapshot(index, "bypass", "The resource exceeds capacity. Bypass the cache without eviction.", url)
                 else:
                     for victim in result["removed_urls"]:
                         cache.remove(victim)
-                        snapshot(index, "evict", f"按 {policy} 规则淘汰资源，释放空间；空间不足时继续淘汰。", victim)
+                        snapshot(index, "evict", f"Evict using {policy}. Repeat until there is enough space.", victim)
                     inserted = cache.insert(url, resource)
                     assert inserted
-                    snapshot(index, "insert", "空间足够，将资源写入缓存；访问次数初始化为 1。", url)
+                    snapshot(index, "insert", "Store the resource with an initial access count of 1.", url)
             totals["requests"] += 1
             totals["hits"] += int(result["cache_hit"])
             totals["bytes"] += size
             totals["hit_bytes"] += size if result["cache_hit"] else 0
             totals["latency_ms"] += result["latency_ms"]
             totals["origin_bytes"] += 0 if result["cache_hit"] else size
-            snapshot(index, "return", "向客户端返回资源，并累计本次请求的指标。", url)
+            snapshot(index, "return", "Return the resource to the client and update the totals.", url)
             result["frame_index"] = len(frames) - 1
         traces[policy] = dict(frames=frames, results=results)
     return dict(capacity_bytes=capacity_bytes, hit_latency_ms=hit_latency_ms, traces=traces)

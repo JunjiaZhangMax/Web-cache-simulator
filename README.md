@@ -2,6 +2,14 @@
 
 ## 缓存流程可视化
 
+**在线演示：[Cache Flow — Shared Web Cache Simulator](https://shared-web-cache-flow.focalcarnation4.chatgpt.site)**
+
+网站公开访问，无需登录、安装依赖或下载项目。支持 FIFO、LRU、LFU 切换，以及请求查询、命中、回源、淘汰、写入和返回的逐步播放。
+
+在线版本展示发布时生成的数据快照；修改本地 CSV 或页面后，需要重新生成并部署，线上内容才会更新。
+
+### 本地运行
+
 在项目目录运行（仅需 Python 标准库）：
 
 ```powershell

@@ -15,7 +15,8 @@ class SharedCache:
         return len(self.entries)
 
     def __contains__(self, url):
-        # Check membership without changing access metadata.
+        # Check membership withou
+        # t changing access metadata.
         return url in self.entries
 
     def get(self, url):

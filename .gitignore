@@ -15,6 +15,10 @@ build/
 dist/
 *.egg-info/
 
+# Local Sites publishing checkout and deployment archive
+/sites/cache-flow/
+/sites/cache-flow-deploy.tar
+
 # Local credentials and environment settings
 .env
 .env.*
