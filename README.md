@@ -1,5 +1,31 @@
 # Shared Web Cache Simulator
 
+## 缓存流程可视化
+
+在项目目录运行（仅需 Python 标准库）：
+
+```powershell
+python src/visualize.py
+```
+
+用浏览器打开生成的 `cache-flow.html`，可离线查看整个缓存流程：
+
+- 切换 FIFO、LRU、LFU；每种策略均从空缓存开始。
+- 自动播放、暂停、前后单步、跳到下一请求，或拖动时间轴。
+- 逐步观察查询、命中、回源、每次淘汰、写入和返回。
+- 查看缓存容量、条目访问记录，以及已完成请求的累计指标。
+- 点击请求轨迹中的任意行，跳到该请求完成时。
+
+可指定输入和运行配置；修改参数或 CSV 后重新生成页面，再刷新浏览器：
+
+```powershell
+python src/visualize.py --resources data/resources.csv --requests data/requests_reference.csv --capacity-bytes 102400 --hit-latency-ms 5 --output cache-flow.html
+```
+
+页面数据由现有 `request_processor` 的真实运行结果生成；可视化回放使用 `SharedCache` 重建各操作后的缓存状态，不发送网络请求。页面是生成时数据的快照。
+
+验证可视化数据：`python -m unittest discover -s tests -p test_visualize.py`。
+
 
 这是一个基于请求轨迹（trace-driven）的共享 Web 缓存模拟器，**不是真实的 HTTP 代理**，不需要发送网络请求。
 

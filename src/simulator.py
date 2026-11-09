@@ -9,7 +9,7 @@ from policies.fifo import select_victim as fifo_policy
 from policies.lru import select_victim as lru_policy
 from policies.lfu import select_victim as lfu_policy
 
-policy = "LRU"  # Default policy, can be changed to "FIFO" or "LFU" as needed
+policy = "FIFO"  # Default policy, can be changed to "FIFO" or "LFU" as needed
 
 def resources_loader(file_path):
     # Load resources from a CSV file.
@@ -61,7 +61,7 @@ def request_processor(resources, requests, cache_capacity_bytes=102400, selected
     results = []
 
     for request in requests:
-        evicted_urls = []
+        removed_urls = []
         url = request["url"]
         resource = resources.get(url)
 
@@ -83,7 +83,7 @@ def request_processor(resources, requests, cache_capacity_bytes=102400, selected
                     while cache.used_bytes + resource["size_bytes"] > cache.capacity_bytes:
                         victim_url = select_victim(cache.entries)
                         cache.remove(victim_url)
-                        evicted_urls.append(victim_url)
+                        removed_urls.append(victim_url)
                     cache.insert(url, resource)
 
             result = {
@@ -94,7 +94,7 @@ def request_processor(resources, requests, cache_capacity_bytes=102400, selected
                 "latency_ms": latency_ms,
             }
 
-        result["evicted_urls"] = evicted_urls
+        result["removed_urls"] = removed_urls
         results.append(result)
 
     return results

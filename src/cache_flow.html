@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shared Cache · 流程播放器</title>
+<style>
+     :root {
+          font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+          color: #dce6f1;
+          background: #0e1420;
+          color-scheme: dark;
+          --muted: #94a6bd;
+          --line: #2b384b;
+          --accent: #73d7c2
+     }
+
+     * {
+          box-sizing: border-box
+     }
+
+     body {
+          margin: 0
+     }
+
+     main {
+          max-width: 1400px;
+          margin: auto;
+          padding: 36px 32px
+     }
+
+     header {
+          display: flex;
+          justify-content: space-between;
+          gap: 20px;
+          align-items: center
+     }
+
+     h1 {
+          font-size: 28px;
+          margin: 8px 0
+     }
+
+     h2 {
+          font-size: 18px;
+          margin: 0 0 18px
+     }
+
+     p {
+          line-height: 1.7
+     }
+
+     small,
+     .muted {
+          color: var(--muted)
+     }
+
+     .eyebrow {
+          font: 12px monospace;
+          letter-spacing: 2px;
+          color: var(--accent)
+     }
+
+     .controls {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          align-items: center;
+          padding: 20px 0
+     }
+
+     button,
+     select {
+          font: inherit;
+          border: 1px solid var(--line);
+          border-radius: 7px;
+          background: #1a2535;
+          padding: 9px 14px;
+          color: inherit;
+          cursor: pointer
+     }
+
+     button:hover {
+          border-color: var(--accent)
+     }
+
+     button:disabled {
+          opacity: .4;
+          cursor: default
+     }
+
+     .primary {
+          background: var(--accent);
+          color: #0e2424;
+          font-weight: 600
+     }
+
+     input[type=range] {
+          accent-color: var(--accent);
+          width: 100%
+     }
+
+     .panel {
+          background: #141e2d;
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          padding: 24px
+     }
+
+     .layout {
+          display: grid;
+          grid-template-columns: 1.25fr 1fr;
+          gap: 20px;
+          margin: 20px 0
+     }
+
+     .flow {
+          display: flex;
+          align-items: stretch;
+          gap: 8px;
+          margin: 24px 0
+     }
+
+     .node {
+          flex: 1;
+          text-align: center;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          padding: 20px 8px;
+          transition: background .2s
+     }
+
+     .node.active {
+          background: #20483f;
+          border-color: var(--accent);
+          color: #c8fff2
+     }
+
+     .arrow {
+          align-self: center;
+          color: var(--muted)
+     }
+
+     #detail {
+          min-height: 86px;
+          border-left: 3px solid var(--accent);
+          padding-left: 16px
+     }
+
+     .url {
+          font-family: Consolas, monospace;
+          font-size: 12px;
+          overflow-wrap: anywhere
+     }
+
+     .badge {
+          display: inline-block;
+          font: 12px monospace;
+          padding: 3px 8px;
+          border-radius: 4px;
+          background: #26354a
+     }
+
+     .hit {
+          color: #83e6c4
+     }
+
+     .miss {
+          color: #f5bd76
+     }
+
+     .capacity {
+          display: flex;
+          gap: 2px;
+          background: #0b111c;
+          height: 28px;
+          border-radius: 5px;
+          overflow: hidden;
+          margin: 12px 0
+     }
+
+     .segment {
+          background: #497d88;
+          min-width: 1px
+     }
+
+     .segment.focus {
+          background: var(--accent)
+     }
+
+     .cache-entry {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          border-top: 1px solid var(--line);
+          padding: 12px 0
+     }
+
+     .cache-entry.focus {
+          color: var(--accent)
+     }
+
+     .cache-entry div:first-child {
+          min-width: 0
+     }
+
+     .metrics {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 24px;
+          padding: 24px 0;
+          border-top: 1px solid var(--line);
+          border-bottom: 1px solid var(--line)
+     }
+
+     .value {
+          font-size: 25px;
+          margin-top: 8px;
+          font-variant-numeric: tabular-nums
+     }
+
+     .scroll {
+          overflow: auto;
+          max-height: 400px
+     }
+
+     table {
+          border-collapse: collapse;
+          width: 100%;
+          font-size: 13px;
+          text-align: left
+     }
+
+     th {
+          position: sticky;
+          top: 0;
+          background: #141e2d;
+          color: var(--muted)
+     }
+
+     th,
+     td {
+          padding: 12px;
+          border-bottom: 1px solid var(--line)
+     }
+
+     tbody tr {
+          cursor: pointer
+     }
+
+     tbody tr:hover,
+     tbody tr.selected {
+          background: #233248
+     }
+
+     tr.pending {
+          color: #7a8a9f
+     }
+
+     td:nth-child(4) {
+          max-width: 340px;
+          overflow-wrap: anywhere
+     }
+
+     footer {
+          margin-top: 24px;
+          color: var(--muted);
+          font-size: 12px
+     }
+
+     .stephead {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 12px
+     }
+
+     a {
+          color: var(--accent)
+     }
+
+     :focus-visible {
+          outline: 2px solid var(--accent);
+          outline-offset: 3px
+     }
+
+     @media(max-width:850px) {
+          main {
+               padding: 20px 16px
+          }
+
+          .layout {
+               grid-template-columns: 1fr
+          }
+
+          .metrics {
+               grid-template-columns: repeat(2, 1fr)
+          }
+
+          header {
+               display: block
+          }
+
+          .flow {
+               gap: 4px
+          }
+
+          .node {
+               padding: 16px 3px;
+               font-size: 13px
+          }
+
+          .panel {
+               padding: 18px
+          }
+     }
+</style>
+<main>
+     <header>
+          <div>
+               <div class="eyebrow">ICS / TRACE-DRIVEN SIMULATOR</div>
+               <h1>看见每一次缓存决策</h1>
+               <p class="muted">多客户端 → 共享缓存 → 源站 · 按操作逐步回放真实模拟结果</p>
+          </div>
+          <div><label>替换策略 <select id="policy">
+                         <option>FIFO</option>
+                         <option>LRU</option>
+                         <option>LFU</option>
+                    </select></label></div>
+     </header>
+     <div class="controls"><button id="reset">回到开始</button><button id="prev">上一步</button><button id="play"
+               class="primary">自动播放</button><button id="next">下一步</button><button
+               id="nextRequest">下一请求</button><label>速度 <select id="speed">
+                    <option value="1600">慢速</option>
+                    <option value="850" selected>正常</option>
+                    <option value="300">快速</option>
+               </select></label><span id="position" class="muted" aria-live="polite"></span></div>
+     <input id="timeline" type="range" min="0" value="0" aria-label="操作时间轴">
+     <div class="layout">
+          <section class="panel">
+               <div class="stephead">
+                    <h2>请求如何流动</h2><span id="phase" class="badge"></span>
+               </div>
+               <div id="requestInfo"></div>
+               <div class="flow">
+                    <div class="node" id="clientNode">客户端</div><span class="arrow">→</span>
+                    <div class="node" id="cacheNode">共享缓存</div><span class="arrow">⇄</span>
+                    <div class="node" id="originNode">源站</div>
+               </div>
+               <div id="detail" aria-live="polite"></div>
+               <p class="muted" id="rule"></p>
+          </section>
+          <section class="panel">
+               <div class="stephead">
+                    <h2>缓存内容</h2><span id="used" class="muted"></span>
+               </div>
+               <div class="capacity" id="capacity" role="img" aria-label="缓存容量占用"></div>
+               <small>条带宽度代表资源占用字节数；高亮为当前操作资源。</small>
+               <div id="entries"></div>
+          </section>
+     </div>
+     <section class="metrics" id="metrics" aria-label="已完成请求累计指标"></section>
+     <section style="margin-top:28px">
+          <h2>请求轨迹 <small>点击任意行跳到该请求完成时</small></h2>
+          <div class="scroll">
+               <table>
+                    <thead>
+                         <tr>
+                              <th>#</th>
+                              <th>客户端</th>
+                              <th>时间</th>
+                              <th>资源 URL</th>
+                              <th>结果</th>
+                              <th>延迟 ms</th>
+                              <th>淘汰数</th>
+                         </tr>
+                    </thead>
+                    <tbody id="log"></tbody>
+               </table>
+          </div>
+     </section>
+     <footer id="source"></footer>
+</main>
+<script id="trace-data" type="application/json">__TRACE_DATA__</script>
+<script>
+     'use strict';
+     const data = JSON.parse(document.getElementById('trace-data').textContent);
+     const $ = id => document.getElementById(id);
+     const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+     const bytes = value => `${(value / 1024).toFixed(1)} KiB`;
+     const rules = { FIFO: 'FIFO：淘汰插入顺序最早的资源；命中不改变插入顺序。', LRU: 'LRU：淘汰最近访问顺序最早的资源；命中会刷新访问顺序。', LFU: 'LFU：淘汰访问次数最少的资源；次数相同按 LRU 决定。' };
+     const names = { start: '准备就绪', request: '查询缓存', hit: 'HIT · 命中', miss: 'MISS · 获取源站', evict: '淘汰资源', insert: '写入缓存', bypass: '跳过缓存', return: '返回客户端' };
+     let policy = 'FIFO', index = 0, timer = null;
+     const trace = () => data.traces[policy];
+     function stop() { if (timer !== null) clearInterval(timer); timer = null; $('play').textContent = '自动播放'; }
+     function go(value) { index = Math.max(0, Math.min(value, trace().frames.length - 1)); if (index === trace().frames.length - 1) stop(); render(); }
+     function render() {
+          const t = trace(), f = t.frames[index], r = t.results[f.request_index], stats = f.totals;
+          $('timeline').max = t.frames.length - 1; $('timeline').value = index;
+          $('position').textContent = `操作 ${index} / ${t.frames.length - 1} · 请求 ${Math.max(0, f.request_index + 1)} / ${t.results.length}`;
+          $('phase').textContent = names[f.phase]; $('phase').className = 'badge ' + (f.phase === 'hit' ? 'hit' : f.phase === 'miss' ? 'miss' : '');
+          $('requestInfo').innerHTML = r ? `<div><strong>${escape(r.client_id)}</strong> <small>· ${escape(r.timestamp)}</small></div><p class="url">${escape(r.url)}</p><small>资源 ${bytes(r.size_bytes)}</small>` : '<p>从空缓存开始，按输入文件顺序处理请求。</p>';
+          const removed = f.phase === 'evict', active = f.phase === 'request' ? 'cacheNode' : ['miss', 'bypass'].includes(f.phase) ? 'originNode' : f.phase === 'return' ? 'clientNode' : ['hit', 'evict', 'insert'].includes(f.phase) ? 'cacheNode' : null;
+          for (const id of ['clientNode', 'cacheNode', 'originNode']) $(id).classList.toggle('active', id === active);
+          $('detail').innerHTML = `<p>${escape(f.message)}</p>${removed ? `<div class="url miss">移出：${escape(f.focus)}</div>` : ''}${f.phase === 'return' ? `<small>本次延迟 ${r.latency_ms} ms · 源站流量 ${bytes(r.cache_hit ? 0 : r.size_bytes)}</small>` : ''}`;
+          $('rule').textContent = rules[policy];
+          $('used').textContent = `${bytes(f.used_bytes)} / ${bytes(data.capacity_bytes)}`;
+          $('capacity').innerHTML = f.entries.filter(e => e.size_bytes > 0).map(e => `<div class="segment ${e.url === f.focus ? 'focus' : ''}" style="width:${data.capacity_bytes ? e.size_bytes / data.capacity_bytes * 100 : 0}%" title="${escape(e.url)} · ${e.size_bytes} bytes"></div>`).join('');
+          $('capacity').setAttribute('aria-label', `缓存占用 ${f.used_bytes} / ${data.capacity_bytes} bytes`);
+          $('entries').innerHTML = f.entries.length ? f.entries.map(e => `<div class="cache-entry ${e.url === f.focus ? 'focus' : ''}"><div><div class="url">${escape(e.url)}</div><small>插入序 ${e.insertion_order} · 最近访问 ${e.last_access} · 次数 ${e.access_count}</small></div><span>${bytes(e.size_bytes)}</span></div>`).join('') : '<p class="muted">缓存为空</p>';
+          const n = stats.requests;
+          $('metrics').innerHTML = [['已完成 / 命中 / 未命中', `${n} / ${stats.hits} / ${n - stats.hits}`], ['请求命中率', `${(n ? stats.hits / n * 100 : 0).toFixed(1)}%`], ['平均响应时间', `${(n ? stats.latency_ms / n : 0).toFixed(1)} ms`], ['源站流量', bytes(stats.origin_bytes)], ['字节命中率', `${(stats.bytes ? stats.hit_bytes / stats.bytes * 100 : 0).toFixed(1)}%`]].map(([label, value]) => `<div><small>${label}</small><div class="value">${value}</div></div>`).join('');
+          $('log').innerHTML = t.results.map((row, i) => { const done = row.frame_index <= index; return `<tr tabindex="0" data-index="${i}" aria-label="跳到请求 ${i + 1} 完成时" class="${i === f.request_index ? 'selected' : done ? '' : 'pending'}"><td>${i + 1}</td><td>${escape(row.client_id)}</td><td>${escape(row.timestamp)}</td><td class="url">${escape(row.url)}</td><td class="${done ? (row.cache_hit ? 'hit' : 'miss') : ''}">${done ? (row.cache_hit ? 'HIT' : 'MISS') : '待完成'}</td><td>${done ? row.latency_ms : '—'}</td><td>${done ? row.removed_urls.length : '—'}</td></tr>`; }).join('');
+          $('prev').disabled = index === 0; $('next').disabled = index === t.frames.length - 1; $('nextRequest').disabled = index === t.frames.length - 1; $('play').disabled = t.frames.length === 1;
+          $('source').textContent = `数据：${data.source.resources} + ${data.source.requests} · 容量 ${data.capacity_bytes} bytes · 命中延迟 ${data.hit_latency_ms} ms · 指标仅统计已返回的请求；切换策略后从空缓存重新播放。`;
+     }
+     function play() { if (timer !== null) { stop(); return; } if (index === trace().frames.length - 1) index = 0; $('play').textContent = '暂停'; timer = setInterval(() => go(index + 1), Number($('speed').value)); render(); }
+     $('play').onclick = play; $('prev').onclick = () => { stop(); go(index - 1); }; $('next').onclick = () => { stop(); go(index + 1); }; $('reset').onclick = () => { stop(); go(0); };
+     $('nextRequest').onclick = () => { stop(); const next = trace().results.find(r => r.frame_index > index); if (next) go(next.frame_index); };
+     $('timeline').oninput = e => { stop(); go(Number(e.target.value)); };
+     $('policy').onchange = e => { stop(); policy = e.target.value; go(0); };
+     $('speed').onchange = () => { if (timer !== null) { stop(); play(); } };
+     function selectRow(event) { const row = event.target.closest('tr[data-index]'); if (row) { stop(); go(trace().results[Number(row.dataset.index)].frame_index); } }
+     $('log').onclick = selectRow; $('log').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRow(e); } };
+     document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+     render();
+</script>
+
+</html>
